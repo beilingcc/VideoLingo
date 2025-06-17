@@ -3,6 +3,7 @@ import platform
 import subprocess
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# ASCII艺术字形式的项目Logo
 ascii_logo = """
 __     ___     _            _     _                    
 \ \   / (_) __| | ___  ___ | |   (_)_ __   __ _  ___  
@@ -13,9 +14,21 @@ __     ___     _            _     _
 """
 
 def install_package(*packages):
+    """
+    安装指定的Python包
+    
+    参数:
+        *packages: 要安装的包名列表
+    """
     subprocess.check_call([sys.executable, "-m", "pip", "install", *packages])
 
 def check_nvidia_gpu():
+    """
+    检测系统是否有NVIDIA GPU
+    
+    返回:
+        bool: 如果检测到NVIDIA GPU返回True，否则返回False
+    """
     install_package("pynvml")
     import pynvml
     from translations.translations import translate as t
@@ -42,13 +55,20 @@ def check_nvidia_gpu():
             pynvml.nvmlShutdown()
 
 def check_ffmpeg():
+    """
+    检查系统是否安装了FFmpeg
+    如果未安装，提供相应系统的安装指南
+    
+    返回:
+        bool: 如果FFmpeg已安装返回True，否则退出程序
+    """
     from rich.console import Console
     from rich.panel import Panel
     from translations.translations import translate as t
     console = Console()
 
     try:
-        # Check if ffmpeg is installed
+        # 检查ffmpeg是否已安装
         subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         console.print(Panel(t("✅ FFmpeg is already installed"), style="green"))
         return True
@@ -56,6 +76,7 @@ def check_ffmpeg():
         system = platform.system()
         install_cmd = ""
         
+        # 根据不同操作系统提供不同的安装命令
         if system == "Windows":
             install_cmd = "choco install ffmpeg"
             extra_note = t("Install Chocolatey first (https://chocolatey.org/)")
@@ -66,6 +87,7 @@ def check_ffmpeg():
             install_cmd = "sudo apt install ffmpeg  # Ubuntu/Debian\nsudo yum install ffmpeg  # CentOS/RHEL"
             extra_note = t("Use your distribution's package manager")
         
+        # 显示安装指南
         console.print(Panel.fit(
             t("❌ FFmpeg not found\n\n") +
             f"{t('🛠️ Install using:')}\n[bold cyan]{install_cmd}[/bold cyan]\n\n" +
@@ -76,6 +98,17 @@ def check_ffmpeg():
         raise SystemExit(t("FFmpeg is required. Please install it and run the installer again."))
 
 def main():
+    """
+    主安装函数，执行以下步骤:
+    1. 安装基本依赖包
+    2. 设置用户界面语言
+    3. 配置PyPI镜像（可选）
+    4. 检测系统和GPU，安装适当版本的PyTorch
+    5. 安装项目依赖
+    6. 检查FFmpeg
+    7. 启动应用程序
+    """
+    # 安装基础依赖包
     install_package("requests", "rich", "ruamel.yaml", "InquirerPy")
     from rich.console import Console
     from rich.panel import Panel
@@ -88,6 +121,7 @@ def main():
 
     console = Console()
     
+    # 显示欢迎面板
     width = max(len(line) for line in ascii_logo.splitlines()) + 4
     welcome_panel = Panel(
         ascii_logo,
@@ -97,9 +131,10 @@ def main():
         border_style="bright_blue"
     )
     console.print(welcome_panel)
-    # Language selection
+    
+    # 语言选择
     current_language = load_key("display_language")
-    # Find the display name for current language code
+    # 查找当前语言代码的显示名称
     current_display = next((k for k, v in DISPLAY_LANGUAGES.items() if v == current_language), "🇬🇧 English")
     selected_language = DISPLAY_LANGUAGES[inquirer.select(
         message="Select language / 选择语言 / 選擇語言 / 言語を選択 / Seleccionar idioma / Sélectionner la langue / Выберите язык:",
@@ -110,8 +145,8 @@ def main():
 
     console.print(Panel.fit(t("🚀 Starting Installation"), style="bold magenta"))
 
-    # Configure mirrors
-    # add a check to ask user if they want to configure mirrors
+    # 配置镜像源
+    # 询问用户是否需要配置PyPI镜像
     if inquirer.confirm(
         message=t("Do you need to auto-configure PyPI mirrors? (Recommended if you have difficulty accessing pypi.org)"),
         default=True
@@ -119,30 +154,34 @@ def main():
         from core.utils.pypi_autochoose import main as choose_mirror
         choose_mirror()
 
-    # Detect system and GPU
+    # 检测系统和GPU
     has_gpu = platform.system() != 'Darwin' and check_nvidia_gpu()
     if has_gpu:
+        # 如果检测到NVIDIA GPU，安装CUDA版本的PyTorch
         console.print(Panel(t("🎮 NVIDIA GPU detected, installing CUDA version of PyTorch..."), style="cyan"))
         subprocess.check_call([sys.executable, "-m", "pip", "install", "torch==2.0.0", "torchaudio==2.0.0", "--index-url", "https://download.pytorch.org/whl/cu118"])
     else:
+        # 否则安装CPU版本的PyTorch
         system_name = "🍎 MacOS" if platform.system() == 'Darwin' else "💻 No NVIDIA GPU"
         console.print(Panel(t(f"{system_name} detected, installing CPU version of PyTorch... Note: it might be slow during whisperX transcription."), style="cyan"))
         subprocess.check_call([sys.executable, "-m", "pip", "install", "torch==2.1.2", "torchaudio==2.1.2"])
 
     @except_handler("Failed to install project")
     def install_requirements():
+        """安装项目依赖"""
         console.print(Panel(t("Installing project in editable mode using `pip install -e .`"), style="cyan"))
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", "."], env={**os.environ, "PIP_NO_CACHE_DIR": "0", "PYTHONIOENCODING": "utf-8"})
 
     @except_handler("Failed to install Noto fonts")
     def install_noto_font():
-        # Detect Linux distribution type
+        """在Linux系统上安装Noto字体"""
+        # 检测Linux发行版类型
         if os.path.exists('/etc/debian_version'):
-            # Debian/Ubuntu systems
+            # Debian/Ubuntu系统
             cmd = ['sudo', 'apt-get', 'install', '-y', 'fonts-noto']
             pkg_manager = "apt-get"
         elif os.path.exists('/etc/redhat-release'):
-            # RHEL/CentOS/Fedora systems
+            # RHEL/CentOS/Fedora系统
             cmd = ['sudo', 'yum', 'install', '-y', 'google-noto*']
             pkg_manager = "yum"
         else:
@@ -152,13 +191,15 @@ def main():
         subprocess.run(cmd, check=True)
         console.print(f"✅ Successfully installed Noto fonts using {pkg_manager}", style="green")
 
+    # 如果是Linux系统，安装Noto字体
     if platform.system() == 'Linux':
         install_noto_font()
     
+    # 安装项目依赖并检查FFmpeg
     install_requirements()
     check_ffmpeg()
     
-    # First panel with installation complete and startup command
+    # 显示安装完成和启动命令的面板
     panel1_text = (
         t("Installation completed") + "\n\n" +
         t("Now I will run this command to start the application:") + "\n" +
@@ -167,7 +208,7 @@ def main():
     )
     console.print(Panel(panel1_text, style="bold green"))
 
-    # Second panel with troubleshooting tips
+    # 显示故障排除提示的面板
     panel2_text = (
         t("If the application fails to start:") + "\n" +
         "1. " + t("Check your network connection") + "\n" +
@@ -175,7 +216,7 @@ def main():
     )
     console.print(Panel(panel2_text, style="yellow"))
 
-    # start the application
+    # 启动应用程序
     subprocess.Popen(["streamlit", "run", "st.py"])
 
 if __name__ == "__main__":
