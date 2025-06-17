@@ -1,33 +1,52 @@
-librosa==0.10.2.post1
-pytorch-lightning==2.3.3
-lightning==2.3.3
-transformers==4.39.3
-moviepy==1.0.3
-numpy==1.26.4
-openai==1.55.3
-opencv-python==4.10.0.84
-openpyxl==3.1.5
-pandas==2.2.3
-pydub==0.25.1
-PyYAML==6.0.2
-replicate==0.33.0
-requests==2.32.3
-resampy==0.4.3
-spacy==3.7.4
-streamlit==1.38.0
-yt-dlp
-json-repair
-ruamel.yaml
-InquirerPy
-autocorrect-py
-ctranslate2==4.4.0
-edge-tts
+# -----------------------------------------------------------------------------
+# VideoLingo 项目依赖文件
+# -----------------------------------------------------------------------------
+# 本文件列出了运行此项目所需的所有 Python 包。
+# 使用 `pip install -r requirements.txt` 命令来安装所有依赖。
+# -----------------------------------------------------------------------------
 
+# --- 核心处理库 (Core Processing Libraries) ---
+librosa==0.10.2.post1      # 用于音频信号分析，例如特征提取
+moviepy==1.0.3            # 强大的视频编辑库，用于最终的音视频合并
+numpy==1.26.4             # Python 科学计算的基础，处理数组和矩阵
+pandas==2.2.3             # 数据处理与分析，用于管理字幕、时间戳等表格数据
+pydub==0.25.1             # 简洁的音频处理库，用于切割、合并、格式转换
+opencv-python==4.10.0.84  # 计算机视觉库，用于视频帧处理或分析
+resampy==0.4.3            # 高效的音频重采样库，用于统一音频采样率
+
+# --- AI 模型与框架 (AI Models & Frameworks) ---
+pytorch-lightning==2.3.3  # PyTorch 的高级封装，简化模型训练与推理
+lightning==2.3.3          # pytorch-lightning 的一部分
+transformers==4.39.3      # Hugging Face 核心库，提供翻译、摘要等预训练模型
+spacy==3.7.4              # 工业级 NLP 库，用于文本分句、词法分析
+ctranslate2==4.4.0        # Transformer 模型的高速推理引擎，被 WhisperX 使用
+
+# --- API 客户端与网络 (API Clients & Networking) ---
+openai==1.55.3            # OpenAI 官方客户端，用于调用 GPT 模型和 TTS
+replicate==0.33.0         # Replicate 平台客户端，用于调用托管的 AI 模型
+requests==2.32.3          # 最常用的 HTTP 请求库，用于与各种 API 通信
+edge-tts                  # 调用微软 Edge 在线 TTS 服务的客户端
+
+# --- 用户界面与交互 (User Interface & Interaction) ---
+streamlit==1.38.0         # 用于快速构建 Web 应用，是本项目的 GUI 基础
+InquirerPy                # 用于构建优雅的命令行交互界面
+
+# --- 工具与辅助库 (Utilities & Helper Libraries) ---
+yt-dlp                    # 强大的视频下载工具，从 YouTube 等平台下载视频
+PyYAML==6.0.2             # 用于读取和写入 YAML 配置文件
+ruamel.yaml               # 功能更强的 YAML 库，能保留格式和注释
+openpyxl==3.1.5           # 用于读写 Excel (.xlsx) 文件
+json-repair               # 用于修复由 LLM 生成的不规范 JSON 数据
+autocorrect-py            # 简单的拼写纠正库
+xmltodict                 # 将 XML 数据转换为 Python 字典
+
+# --- TTS 时长估算相关 (TTS Duration Estimation) ---
+syllables                 # 估算英文单词的音节数
+pypinyin                  # 估算中文汉字的拼音和声调
+g2p-en                    # 将英文单词转换为音素序列 (Grapheme-to-Phoneme)
+
+# --- 从 GitHub 安装的包 (Packages from GitHub) ---
+# 从 GitHub 安装，用于音源分离（人声/背景乐）
 demucs[dev] @ git+https://github.com/adefossez/demucs
+# 从 GitHub 安装特定 commit 的版本，用于提供更精确的词级时间戳
 whisperx @ git+https://github.com/m-bain/whisperx.git@7307306a9d8dd0d261e588cc933322454f853853
-
-syllables
-pypinyin
-g2p-en
-xmltodict
-
