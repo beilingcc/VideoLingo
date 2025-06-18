@@ -1,12 +1,12 @@
 from ruamel.yaml import YAML
 import threading
-
+import os
 # ------------
 # 配置文件工具模块
 # 负责加载和更新config.yaml配置文件
 # ------------
 
-CONFIG_PATH = 'config.yaml'  # 配置文件路径
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config.yaml') # 配置文件路径
 lock = threading.Lock()      # 线程锁，保证多线程安全
 
 yaml = YAML()
